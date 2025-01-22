@@ -2,6 +2,8 @@ import json
 import os
 import re
 import time
+import subprocess
+import shlex
 from http.client import HTTPException
 
 from requests import RequestException
@@ -25,9 +27,10 @@ class TikTok:
         url=None,
         user=None,
         room_id=None,
-        duration=None
+        duration=None,
+        youtube_rtmp=None  # Add new parameter
     ):
-
+        self.youtube_rtmp = youtube_rtmp
         # TikTok
         self.url = url
         self.user = user
@@ -119,12 +122,41 @@ class TikTok:
 
     def start_recording(self):
         """
-        Start recording live
+        Start recording live and restream to YouTube if RTMP URL is provided
         """
         live_url = self.get_live_url()
         if live_url is None or live_url == '':
             raise LiveNotFound(TikTokError.RETRIEVE_LIVE_URL)
 
+        if self.youtube_rtmp:
+            logger.info("Starting YouTube restream...")
+            # FFmpeg command to restream to YouTube
+            cmd = f'ffmpeg -i "{live_url}" -c:v copy -c:a aac -f flv "{self.youtube_rtmp}"'
+            
+            try:
+                process = subprocess.Popen(
+                    shlex.split(cmd),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+                
+                logger.info("Streaming started. Press CTRL+C to stop.")
+                try:
+                    process.wait()
+                except KeyboardInterrupt:
+                    process.terminate()
+                    logger.info("Streaming stopped by user.")
+                
+                if process.returncode != 0:
+                    logger.error("FFmpeg streaming failed")
+                
+            except Exception as ex:
+                logger.error(f"Streaming error: {ex}")
+                raise
+            
+            return
+
+        # Original recording code for local saving
         current_date = time.strftime("%Y.%m.%d_%H-%M-%S", time.localtime())
 
         if isinstance(self.output, str) and self.output != '':

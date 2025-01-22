@@ -45,7 +45,8 @@ def main():
             user=args.user,
             room_id=args.room_id,
             duration=args.duration,
-            cookies=cookies
+            cookies=cookies,
+            youtube_rtmp=args.youtube_rtmp
         ).run()
 
     except ArgsParseError as ex:

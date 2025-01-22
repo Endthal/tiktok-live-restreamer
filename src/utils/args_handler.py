@@ -15,6 +15,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        "-youtube_rtmp",
+        type=str,
+        dest='youtube_rtmp',
+        help='Stream TikTok live to YouTube using RTMP URL.',
+        required=False,
+    )
+
+    parser.add_argument(
         "-url",
         dest="url",
         help="Record a live session from the TikTok URL.",
